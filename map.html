@@ -1,0 +1,4005 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Europe Travel Map</title>
+
+
+  <!-- =========================================
+       Mapbox
+  ========================================== -->
+
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
+
+  <script
+    src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js">
+  </script>
+
+
+  <!-- =========================================
+       CSS
+  ========================================== -->
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+    :root {
+  --pin-color: #d94f7a;
+}
+
+
+    html,
+    body {
+
+      margin: 0;
+      padding: 0;
+
+      width: 100%;
+      height: 100%;
+
+      overflow: hidden;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        "Hiragino Sans",
+        "Yu Gothic",
+        sans-serif;
+
+    }
+
+
+    /* =========================================
+       全体
+    ========================================== */
+
+    #app {
+
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+
+      position: relative;
+
+    }
+
+
+    /* =========================================
+       左側スケジュール
+    ========================================== */
+
+    #schedule-panel {
+
+      width: 300px;
+
+      height: 100%;
+
+      background: #ffffff;
+
+      border-right: 1px solid #e5e5e5;
+
+      overflow-y: auto;
+
+      flex-shrink: 0;
+
+      z-index: 20;
+
+    }
+
+
+    #schedule-header {
+
+      padding: 20px 20px 14px;
+
+      border-bottom: 1px solid #eeeeee;
+
+      font-size: 13px;
+
+      font-weight: 600;
+
+      letter-spacing: 0.04em;
+
+    }
+
+
+    #schedule-content {
+
+      padding: 8px 0 30px;
+
+    }
+
+
+    /* =========================================
+       都市
+    ========================================== */
+
+    .city-section {
+
+      border-bottom: 1px solid #eeeeee;
+
+    }
+
+
+    .city-section.hidden {
+
+      display: none;
+
+    }
+
+
+    .city-header {
+
+      width: 100%;
+
+      padding: 14px 20px;
+
+      border: none;
+
+      background: #ffffff;
+
+      text-align: left;
+
+      cursor: pointer;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 13px;
+
+      font-weight: 600;
+
+      color: #222222;
+
+    }
+
+
+    .city-header:hover {
+
+      background: #f7f7f7;
+
+    }
+
+
+    .city-arrow {
+
+      font-size: 11px;
+
+      color: #888888;
+
+      transition: transform 0.2s ease;
+
+    }
+
+
+    .city-section.collapsed .city-arrow {
+
+      transform: rotate(-90deg);
+
+    }
+
+
+    .city-places {
+
+      padding: 0 10px 12px;
+
+    }
+
+
+    .city-section.collapsed .city-places {
+
+      display: none;
+
+    }
+
+
+    /* =========================================
+       日付
+    ========================================== */
+
+    .date-section {
+
+      margin-bottom: 2px;
+
+    }
+
+
+    .date-header {
+  width: 100%;
+
+  padding: 9px 10px 7px 20px;
+
+  border: none;
+
+  background: transparent;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  color: #777777;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.04em;
+}
+
+
+    .date-header:hover {
+
+      background: #f7f7f7;
+
+    }
+
+
+    .date-arrow {
+
+      font-size: 9px;
+
+      color: #aaa;
+
+      transition: transform 0.2s ease;
+
+    }
+
+
+    .date-section.collapsed .date-arrow {
+
+      transform: rotate(-90deg);
+
+    }
+
+
+    .date-places {
+
+      padding-bottom: 5px;
+
+    }
+
+
+    .date-section.collapsed .date-places {
+
+      display: none;
+
+    }
+
+    
+
+
+    /* =========================================
+       スケジュールの場所
+    ========================================== */
+
+    .schedule-item {
+
+      width: 100%;
+
+      border: none;
+
+      background: transparent;
+
+      text-align: left;
+
+      cursor: pointer;
+
+      padding: 8px 10px 8px 28px;
+
+      display: block;
+
+      color: #333333;
+
+      border-radius: 6px;
+
+    }
+
+
+    .schedule-item:hover {
+
+      background: #f5f5f5;
+
+    }
+
+
+    .schedule-item.hidden {
+
+      display: none;
+
+    }
+
+
+    .schedule-item-time {
+
+      font-size: 10px;
+
+      color: #999999;
+
+      margin-bottom: 2px;
+
+      letter-spacing: 0.03em;
+
+    }
+
+
+    .schedule-item-name {
+
+      font-size: 12px;
+
+      line-height: 1.5;
+
+    }
+
+
+    /* =========================================
+       地図エリア
+    ========================================== */
+
+    #map-area {
+
+      position: relative;
+
+      flex: 1;
+
+      height: 100%;
+
+    }
+
+
+    #map {
+
+      width: 100%;
+      height: 100%;
+
+    }
+
+
+    /* =========================================
+       モノクロ地図
+    ========================================== */
+
+    #map .mapboxgl-canvas {
+
+      filter: grayscale(100%);
+
+    }
+
+
+    /* =========================================
+       上部カテゴリー
+    ========================================== */
+
+    #category-bar {
+
+      position: absolute;
+
+      top: 15px;
+
+      left: 15px;
+
+      right: 15px;
+
+      z-index: 10;
+
+      display: flex;
+
+      gap: 7px;
+
+      overflow-x: auto;
+
+      padding-bottom: 3px;
+
+      scrollbar-width: none;
+
+    }
+
+
+    #category-bar::-webkit-scrollbar {
+
+      display: none;
+
+    }
+
+
+    .category-button {
+
+      flex-shrink: 0;
+
+      border: 1px solid #222222;
+
+      background: rgba(255, 255, 255, 0.95);
+
+      color: #222222;
+
+      border-radius: 20px;
+
+      padding: 7px 13px;
+
+      font-size: 11px;
+
+      cursor: pointer;
+
+      backdrop-filter: blur(8px);
+
+      transition: all 0.2s ease;
+
+    }
+
+
+    .category-button:hover {
+
+      background: #f3f3f3;
+
+    }
+
+
+    .category-button.active {
+
+      background: #222222;
+
+      color: #ffffff;
+
+    }
+
+
+    /* =========================================
+       PLACE MARKER
+    ========================================== */
+
+    .place-marker {
+  width: 15px;
+  height: 15px;
+
+  border-radius: 50%;
+
+  background: var(--pin-color);
+
+  border: 2px solid #ffffff;
+
+  box-shadow:
+    0 1px 5px rgba(0, 0, 0, 0.25);
+
+  cursor: pointer;
+
+  transition:
+    width 0.2s ease,
+    height 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.place-marker:hover {
+  width: 20px;
+  height: 20px;
+
+  background: var(--pin-color);
+}
+
+
+    .place-marker:hover {
+
+      width: 20px;
+
+      height: 20px;
+
+      background: #222222;
+
+    }
+
+
+    .place-marker.filtered-out {
+
+      display: none;
+
+    }
+
+
+    /* =========================================
+       Popup
+    ========================================== */
+
+    .mapboxgl-popup {
+
+      max-width: 260px !important;
+
+    }
+
+
+    .mapboxgl-popup-content {
+
+      padding: 0;
+
+      border-radius: 10px;
+
+      overflow: hidden;
+
+      box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.15);
+
+    }
+
+
+    .mapboxgl-popup-close-button {
+
+      z-index: 10;
+
+      width: 28px;
+
+      height: 28px;
+
+      font-size: 18px;
+
+      color: #222222;
+
+    }
+
+
+    /* =========================================
+       Popup画像
+    ========================================== */
+
+    .popup-image-area {
+
+      position: relative;
+
+      width: 100%;
+
+      height: 150px;
+
+      background: #eeeeee;
+
+    }
+
+
+    .popup-image-slider {
+
+      width: 100%;
+
+      height: 100%;
+
+      display: flex;
+
+      overflow: hidden;
+
+    }
+
+
+    .popup-image-slide {
+
+      width: 100%;
+
+      height: 100%;
+
+      flex: 0 0 100%;
+
+      object-fit: cover;
+
+      display: block;
+
+    }
+
+
+    /* =========================================
+       画像左右ボタン
+    ========================================== */
+
+    .image-arrow {
+
+      position: absolute;
+
+      top: 50%;
+
+      transform: translateY(-50%);
+
+      width: 28px;
+
+      height: 28px;
+
+      border: none;
+
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.88);
+
+      color: #222222;
+
+      font-size: 18px;
+
+      line-height: 28px;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      z-index: 2;
+
+      padding: 0;
+
+    }
+
+
+    .image-arrow-left {
+
+      left: 8px;
+
+    }
+
+
+    .image-arrow-right {
+
+      right: 8px;
+
+    }
+
+
+    .image-arrow:hover {
+
+      background: #ffffff;
+
+    }
+
+
+    /* =========================================
+       画像ドット
+    ========================================== */
+
+    .image-dots {
+
+      position: absolute;
+
+      left: 50%;
+
+      bottom: 8px;
+
+      transform: translateX(-50%);
+
+      display: flex;
+
+      gap: 5px;
+
+      z-index: 3;
+
+    }
+
+
+    .image-dot {
+
+      width: 6px;
+
+      height: 6px;
+
+      padding: 0;
+
+      border: none;
+
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.6);
+
+      cursor: pointer;
+
+    }
+
+
+    .image-dot.active {
+
+      background: #ffffff;
+
+      transform: scale(1.25);
+
+    }
+
+
+    /* =========================================
+       Popup PLACE CARD
+    ========================================== */
+
+    .popup-place-card {
+
+      padding: 13px 15px 14px;
+
+      color: #222222;
+
+    }
+
+
+    .popup-place-date {
+
+      font-size: 10px;
+
+      color: #999999;
+
+      letter-spacing: 0.04em;
+
+      margin-bottom: 4px;
+
+    }
+
+
+    .popup-place-name {
+
+      font-size: 15px;
+
+      font-weight: 600;
+
+      line-height: 1.4;
+
+      margin-bottom: 2px;
+
+    }
+
+
+    .popup-place-city {
+
+      font-size: 10px;
+
+      color: #888888;
+
+      margin-bottom: 7px;
+
+    }
+
+
+    .popup-place-category {
+
+      font-size: 10px;
+
+      color: #777777;
+
+      margin-bottom: 11px;
+
+    }
+
+
+    /* =========================================
+       詳しく見る
+    ========================================== */
+
+    .detail-button {
+
+      display: block;
+
+      width: 100%;
+
+      padding: 9px 0 0;
+
+      border: none;
+
+      border-top: 1px solid #eeeeee;
+
+      background: transparent;
+
+      color: #222222;
+
+      text-align: left;
+
+      font-size: 11px;
+
+      font-weight: 600;
+
+      cursor: pointer;
+
+    }
+
+
+    .detail-button:hover {
+
+      opacity: 0.55;
+
+    }
+
+
+    /* =========================================
+       右側詳細パネル
+    ========================================== */
+
+    #detail-panel {
+
+      position: absolute;
+
+      top: 0;
+
+      right: 0;
+
+      width: 390px;
+
+      max-width: 90vw;
+
+      height: 100%;
+
+      background: #ffffff;
+
+      z-index: 30;
+
+      box-shadow:
+        -8px 0 30px rgba(0, 0, 0, 0.12);
+
+      transform: translateX(100%);
+
+      transition:
+        transform 0.35s ease;
+
+      overflow-y: auto;
+
+    }
+
+
+    #detail-panel.open {
+
+      transform: translateX(0);
+
+    }
+
+
+    #detail-close {
+
+      position: absolute;
+
+      top: 12px;
+
+      right: 12px;
+
+      z-index: 5;
+
+      width: 32px;
+
+      height: 32px;
+
+      border: none;
+
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.9);
+
+      color: #222222;
+
+      font-size: 20px;
+
+      line-height: 32px;
+
+      padding: 0;
+
+      cursor: pointer;
+
+    }
+
+
+    #detail-close:hover {
+
+      background: #eeeeee;
+
+    }
+
+
+    #detail-content {
+
+      padding-bottom: 40px;
+
+    }
+
+
+    /* =========================================
+       詳細パネル画像
+    ========================================== */
+
+    .detail-image-area {
+
+      position: relative;
+
+      width: 100%;
+
+      height: 300px;
+
+      background: #eeeeee;
+
+    }
+
+
+    .detail-image {
+
+      width: 100%;
+
+      height: 100%;
+
+      object-fit: cover;
+
+      display: block;
+
+    }
+
+
+    .detail-image-empty {
+
+      width: 100%;
+
+      height: 100%;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      color: #aaa;
+
+      font-size: 11px;
+
+    }
+
+
+    /* =========================================
+       詳細本文
+    ========================================== */
+
+    .detail-body {
+
+      padding: 22px;
+
+    }
+
+
+    .detail-date {
+
+      font-size: 11px;
+
+      color: #999999;
+
+      letter-spacing: 0.04em;
+
+      margin-bottom: 6px;
+
+    }
+
+
+    .detail-name {
+
+      font-size: 22px;
+
+      font-weight: 600;
+
+      line-height: 1.4;
+
+      margin-bottom: 3px;
+
+    }
+
+
+    .detail-city {
+
+      font-size: 12px;
+
+      color: #777777;
+
+      margin-bottom: 12px;
+
+    }
+
+
+    .detail-category {
+
+      font-size: 11px;
+
+      color: #777777;
+
+      margin-bottom: 22px;
+
+    }
+
+
+    .detail-section {
+
+      padding-top: 16px;
+
+      margin-top: 16px;
+
+      border-top: 1px solid #eeeeee;
+
+    }
+
+
+    .detail-section-label {
+
+      font-size: 10px;
+
+      color: #999999;
+
+      letter-spacing: 0.08em;
+
+      margin-bottom: 7px;
+
+    }
+
+
+    .detail-text {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #444444;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+    
+
+
+    /* =========================================
+       詳細パネル画像ナビ
+    ========================================== */
+
+    .detail-image-arrow {
+
+      position: absolute;
+
+      top: 50%;
+
+      transform: translateY(-50%);
+
+      width: 34px;
+
+      height: 34px;
+
+      border: none;
+
+      border-radius: 50%;
+
+      background: rgba(255, 255, 255, 0.88);
+
+      color: #222222;
+
+      font-size: 21px;
+
+      line-height: 34px;
+
+      padding: 0;
+
+      cursor: pointer;
+
+    }
+
+
+    .detail-image-arrow-left {
+
+      left: 10px;
+
+    }
+
+
+    .detail-image-arrow-right {
+
+      right: 10px;
+
+    }
+
+
+    .detail-image-dots {
+
+      position: absolute;
+
+      bottom: 12px;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      display: flex;
+
+      gap: 5px;
+
+    }
+
+
+    .detail-image-dot {
+
+      width: 6px;
+
+      height: 6px;
+
+      border: none;
+
+      border-radius: 50%;
+
+      padding: 0;
+
+      background: rgba(255, 255, 255, 0.55);
+
+      cursor: pointer;
+
+    }
+
+
+    .detail-image-dot.active {
+
+      background: #ffffff;
+
+      transform: scale(1.2);
+
+    }
+
+
+    /* =========================================
+       Digリンク
+    ========================================== */
+
+    .dig-link {
+
+      display: inline-block;
+
+      margin-top: 22px;
+
+      padding-top: 14px;
+
+      border-top: 1px solid #eeeeee;
+
+      width: 100%;
+
+      color: #222222;
+
+      text-decoration: none;
+
+      font-size: 12px;
+
+      font-weight: 600;
+
+    }
+
+
+    .dig-link:hover {
+
+      opacity: 0.55;
+
+    }
+
+
+    /* =========================================
+       モバイル
+    ========================================== */
+
+    @media (max-width: 700px) {
+
+      #schedule-panel {
+
+        width: 230px;
+
+      }
+
+
+      #detail-panel {
+
+        width: 100%;
+
+        max-width: 100%;
+
+      }
+
+
+      .popup-image-area {
+
+        height: 130px;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+  <div id="app">
+
+
+    <!-- =======================================
+         左側スケジュール
+    ======================================== -->
+
+    <aside id="schedule-panel">
+
+      <div id="schedule-header">
+        SCHEDULE
+      </div>
+
+      <div id="schedule-content">
+      </div>
+
+    </aside>
+
+
+    <!-- =======================================
+         地図
+    ======================================== -->
+
+    <main id="map-area">
+
+
+      <!-- カテゴリーフィルター -->
+
+      <div id="category-bar">
+
+        <button
+          class="category-button active"
+          data-category="all"
+        >
+          ALL
+        </button>
+
+      </div>
+
+
+      <div id="map"></div>
+
+
+      <!-- =====================================
+           右側詳細パネル
+      ====================================== -->
+
+      <aside id="detail-panel">
+
+        <button
+          id="detail-close"
+          type="button"
+          aria-label="閉じる"
+        >
+          ×
+        </button>
+
+        <div id="detail-content">
+        </div>
+
+      </aside>
+
+
+    </main>
+
+
+  </div>
+
+
+  <script>
+
+
+    // =========================================
+    // Mapbox
+    // =========================================
+
+    mapboxgl.accessToken =
+      'pk.eyJ1Ijoia2FuYW1lbiIsImEiOiJjbXVqdWhrZjEwdGd0MnhxM2R3b3Q0dTdyIn0.xsqeA_Hb82MSBfRZ5rA2CA';
+
+
+    const map = new mapboxgl.Map({
+
+      container: 'map',
+
+      style:
+        'mapbox://styles/kanamen/cmum617wm001p01sl5q1ea72v',
+
+      center: [10, 48],
+
+      zoom: 4,
+
+      language: 'ja'
+
+    });
+
+
+    // =========================================
+    // データ保存用
+    // =========================================
+
+    const places = [];
+
+    const markers = [];
+
+    let scheduleItems = [];
+
+    let activeCategory = 'all';
+
+
+    // =========================================
+    // 詳細パネル用
+    // =========================================
+
+    let currentDetailImages = [];
+
+    let currentDetailImageIndex = 0;
+
+
+    // =========================================
+    // ① ルート
+    // =========================================
+
+    map.on('load', () => {
+
+
+      // =======================================
+      // MAIN ROUTE
+      // =======================================
+
+      map.addSource('main-route', {
+
+        type: 'geojson',
+
+        data: {
+
+          type: 'Feature',
+
+          properties: {},
+
+          geometry: {
+
+            type: 'LineString',
+
+            coordinates: [
+
+              [139.7798, 35.5494],
+
+              [121.4737, 31.2304],
+
+              [2.1734, 41.3851],
+
+              [12.4964, 41.9028],
+
+              [11.2558, 43.7696],
+
+              [12.3155, 45.4408],
+
+              [2.3522, 48.8566],
+
+              [-0.1276, 51.5074],
+
+              [14.4378, 50.0755],
+
+              [121.5654, 25.0330],
+
+              [140.3929, 35.7767]
+
+            ]
+
+          }
+
+        }
+
+      });
+
+
+      map.addLayer({
+
+        id: 'main-route-line',
+
+        type: 'line',
+
+        source: 'main-route',
+
+        paint: {
+
+          'line-color': '#333333',
+
+          'line-width': 3,
+
+          'line-opacity': 0.8
+
+        }
+
+      });
+
+
+      // =======================================
+      // PISA
+      // =======================================
+
+      map.addSource('pisa-route', {
+
+        type: 'geojson',
+
+        data: {
+
+          type: 'Feature',
+
+          properties: {},
+
+          geometry: {
+
+            type: 'LineString',
+
+            coordinates: [
+
+              [11.2558, 43.7696],
+
+              [10.4017, 43.7228],
+
+              [11.2558, 43.7696]
+
+            ]
+
+          }
+
+        }
+
+      });
+
+
+      map.addLayer({
+
+        id: 'pisa-route-line',
+
+        type: 'line',
+
+        source: 'pisa-route',
+
+        paint: {
+
+          'line-color': '#333333',
+
+          'line-width': 1.5,
+
+          'line-opacity': 0.5
+
+        }
+
+      });
+
+
+      // =======================================
+      // MONT SAINT MICHEL
+      // =======================================
+
+      map.addSource('mont-route', {
+
+        type: 'geojson',
+
+        data: {
+
+          type: 'Feature',
+
+          properties: {},
+
+          geometry: {
+
+            type: 'LineString',
+
+            coordinates: [
+
+              [2.3522, 48.8566],
+
+              [-1.5115, 48.6361],
+
+              [2.3522, 48.8566]
+
+            ]
+
+          }
+
+        }
+
+      });
+
+
+      map.addLayer({
+
+        id: 'mont-route-line',
+
+        type: 'line',
+
+        source: 'mont-route',
+
+        paint: {
+
+          'line-color': '#333333',
+
+          'line-width': 1.5,
+
+          'line-opacity': 0.5
+
+        }
+
+      });
+
+
+      // =======================================
+      // BRIGHTON
+      // =======================================
+
+      map.addSource('brighton-route', {
+
+        type: 'geojson',
+
+        data: {
+
+          type: 'Feature',
+
+          properties: {},
+
+          geometry: {
+
+            type: 'LineString',
+
+            coordinates: [
+
+              [-0.1276, 51.5074],
+
+              [-0.1395, 50.8284],
+
+              [-0.1276, 51.5074]
+
+            ]
+
+          }
+
+        }
+
+      });
+
+
+      map.addLayer({
+
+        id: 'brighton-route-line',
+
+        type: 'line',
+
+        source: 'brighton-route',
+
+        paint: {
+
+          'line-color': '#333333',
+
+          'line-width': 1.5,
+
+          'line-opacity': 0.5
+
+        }
+
+      });
+
+
+      // =======================================
+      // OXFORD
+      // =======================================
+
+      map.addSource('oxford-route', {
+
+        type: 'geojson',
+
+        data: {
+
+          type: 'Feature',
+
+          properties: {},
+
+          geometry: {
+
+            type: 'LineString',
+
+            coordinates: [
+
+              [-0.1276, 51.5074],
+
+              [-1.2577, 51.7520],
+
+              [-0.1276, 51.5074]
+
+            ]
+
+          }
+
+        }
+
+      });
+
+
+      map.addLayer({
+
+        id: 'oxford-route-line',
+
+        type: 'line',
+
+        source: 'oxford-route',
+
+        paint: {
+
+          'line-color': '#333333',
+
+          'line-width': 1.5,
+
+          'line-opacity': 0.5
+
+        }
+
+      });
+
+    });
+
+
+    // =========================================
+    // ② Google Sheets
+    // =========================================
+
+    const sheetUrl =
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTFR14lEVqmc4DSlUx6TpqbofCStlSB6uXWzpR8Dt0N-5T2xWQU6yUhWaSRO6wqJCP8MRaYEKe5gpbf/pub?gid=0&single=true&output=csv';
+
+
+    // =========================================
+    // CSV parser
+    // =========================================
+
+    function parseCSV(text) {
+
+      const rows = [];
+
+      let row = [];
+
+      let cell = '';
+
+      let insideQuotes = false;
+
+
+      for (
+        let i = 0;
+        i < text.length;
+        i++
+      ) {
+
+        const char = text[i];
+
+        const next = text[i + 1];
+
+
+        if (
+          char === '"' &&
+          insideQuotes &&
+          next === '"'
+        ) {
+
+          cell += '"';
+
+          i++;
+
+        }
+
+
+        else if (char === '"') {
+
+          insideQuotes =
+            !insideQuotes;
+
+        }
+
+
+        else if (
+          char === ',' &&
+          !insideQuotes
+        ) {
+
+          row.push(cell);
+
+          cell = '';
+
+        }
+
+
+        else if (
+          (char === '\n' ||
+           char === '\r') &&
+          !insideQuotes
+        ) {
+
+          if (
+            char === '\r' &&
+            next === '\n'
+          ) {
+
+            i++;
+
+          }
+
+
+          row.push(cell);
+
+          cell = '';
+
+
+          if (
+            row.some(
+              value =>
+                value.trim() !== ''
+            )
+          ) {
+
+            rows.push(row);
+
+          }
+
+
+          row = [];
+
+        }
+
+
+        else {
+
+          cell += char;
+
+        }
+
+      }
+
+
+      if (
+        cell !== '' ||
+        row.length > 0
+      ) {
+
+        row.push(cell);
+
+        rows.push(row);
+
+      }
+
+
+      return rows;
+
+    }
+
+
+    // =========================================
+    // HTML escape
+    // =========================================
+
+    function escapeHTML(text) {
+
+      if (!text) {
+
+        return '';
+
+      }
+
+
+      return String(text)
+
+        .replace(
+          /&/g,
+          '&amp;'
+        )
+
+        .replace(
+          /</g,
+          '&lt;'
+        )
+
+        .replace(
+          />/g,
+          '&gt;'
+        )
+
+        .replace(
+          /"/g,
+          '&quot;'
+        )
+
+        .replace(
+          /'/g,
+          '&#039;'
+        );
+
+    }
+
+    // =========================================
+// 本文の余白を整理
+// =========================================
+
+function cleanText(text) {
+
+  if (!text) {
+    return '';
+  }
+
+  return String(text)
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/^[ \t　]+/gm, '')
+    .replace(/[ \t　]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+}
+
+
+    // =========================================
+    // 日付
+    // =========================================
+
+    function formatDate(dateText) {
+
+      if (!dateText) {
+
+        return '';
+
+      }
+
+
+      const parts =
+        dateText.split('-');
+
+
+      if (parts.length === 3) {
+
+        return (
+          parts[0] +
+          '.' +
+          parts[1] +
+          '.' +
+          parts[2]
+        );
+
+      }
+
+
+      return dateText;
+
+    }
+    // =========================================
+// 日付＋時刻
+// 2026-08-04 + 09:00
+// → 08.04.09:00
+// =========================================
+
+function formatDateTime(place) {
+
+  const dateParts =
+    (place.date || '').split('-');
+
+  let dateText = '';
+
+  if (dateParts.length === 3) {
+
+    dateText =
+      dateParts[1] +
+      '.' +
+      dateParts[2];
+
+  }
+
+  const timeText =
+    (place.time || '').trim();
+
+  if (dateText && timeText) {
+    return `${dateText}.${timeText}`;
+  }
+
+  if (dateText) {
+    return dateText;
+  }
+
+  if (timeText) {
+    return timeText;
+  }
+
+  return '';
+
+}
+
+    // =========================================
+// 都市 → 国旗
+// =========================================
+
+function getCountryFlag(city) {
+
+  if (!city) {
+    return '';
+  }
+
+  const name = city.trim();
+
+  const flags = {
+
+    'バルセロナ': '🇪🇸',
+
+    'ローマ': '🇮🇹',
+    'ピサ': '🇮🇹',
+    'フィレンツェ': '🇮🇹',
+    'ヴェネツィア': '🇮🇹',
+    'ベネチア': '🇮🇹',
+
+    'パリ': '🇫🇷',
+    'モン・サン・ミシェル': '🇫🇷',
+
+    'ロンドン': '🇬🇧',
+    'ブライトン': '🇬🇧',
+    'オックスフォード': '🇬🇧',
+
+    'プラハ': '🇨🇿',
+
+    '台北': '🇹🇼',
+
+    '上海': '🇨🇳',
+
+    '東京': '🇯🇵',
+    '成田': '🇯🇵'
+
+  };
+
+  return flags[name] || '';
+
+}
+
+
+    // =========================================
+    // 日付短縮表示
+    // 2026-08-05 → 08.05
+    // =========================================
+
+    function formatShortDate(dateText) {
+
+      if (!dateText) {
+
+        return '';
+
+      }
+
+
+      const parts =
+        dateText.split('-');
+
+
+      if (parts.length === 3) {
+
+        return (
+          parts[1] +
+          '.' +
+          parts[2]
+        );
+
+      }
+
+
+      return dateText;
+
+    }
+
+   
+
+    // =========================================
+    // 時刻
+    // =========================================
+
+    function formatTime(timeText) {
+
+      if (!timeText) {
+
+        return '';
+
+      }
+
+
+      return timeText.trim();
+
+    }
+
+
+    // =========================================
+    // 画像URLを配列化
+    //
+    // Google Sheetsの image セルは
+    // | で複数画像を区切る
+    // =========================================
+
+    function getImageUrls(place) {
+
+      return (place.image || '')
+
+        .split('|')
+
+        .map(
+          image =>
+            image.trim()
+        )
+
+        .filter(
+          image =>
+            image !== ''
+        );
+
+    }
+
+
+    // =========================================
+    // ③ Popup画像カルーセル
+    // =========================================
+
+    function setupImageCarousel(popup) {
+
+      const popupElement =
+        popup.getElement();
+
+
+      if (!popupElement) {
+
+        return;
+
+      }
+
+
+      const slider =
+        popupElement.querySelector(
+          '.popup-image-slider'
+        );
+
+
+      if (!slider) {
+
+        return;
+
+      }
+
+
+      const slides =
+        popupElement.querySelectorAll(
+          '.popup-image-slide'
+        );
+
+
+      const dots =
+        popupElement.querySelectorAll(
+          '.image-dot'
+        );
+
+
+      const leftButton =
+        popupElement.querySelector(
+          '.image-arrow-left'
+        );
+
+
+      const rightButton =
+        popupElement.querySelector(
+          '.image-arrow-right'
+        );
+
+
+      let currentIndex = 0;
+
+
+      function update() {
+
+        if (!slides.length) {
+
+          return;
+
+        }
+
+
+        slides.forEach(
+          (slide, index) => {
+
+            slide.style.display =
+              index === currentIndex
+                ? 'block'
+                : 'none';
+
+          }
+        );
+
+
+        dots.forEach(
+          (dot, index) => {
+
+            dot.classList.toggle(
+              'active',
+              index === currentIndex
+            );
+
+          }
+        );
+
+      }
+
+
+      function goTo(index) {
+
+        const length =
+          slides.length;
+
+
+        if (!length) {
+
+          return;
+
+        }
+
+
+        currentIndex =
+          (index + length) %
+          length;
+
+
+        update();
+
+      }
+
+
+      if (leftButton) {
+
+        leftButton.addEventListener(
+          'click',
+          event => {
+
+            event.stopPropagation();
+
+            goTo(
+              currentIndex - 1
+            );
+
+          }
+        );
+
+      }
+
+
+      if (rightButton) {
+
+        rightButton.addEventListener(
+          'click',
+          event => {
+
+            event.stopPropagation();
+
+            goTo(
+              currentIndex + 1
+            );
+
+          }
+        );
+
+      }
+
+
+      dots.forEach(
+        (dot, index) => {
+
+          dot.addEventListener(
+            'click',
+            event => {
+
+              event.stopPropagation();
+
+              goTo(index);
+
+            }
+          );
+
+        }
+      );
+
+
+      update();
+
+    }
+
+
+    // =========================================
+    // ④ 詳細パネル
+    // =========================================
+
+    function openDetail(place) {
+
+      const panel =
+        document.getElementById(
+          'detail-panel'
+        );
+
+
+      const content =
+        document.getElementById(
+          'detail-content'
+        );
+
+
+      currentDetailImages =
+        getImageUrls(place);
+
+
+      currentDetailImageIndex = 0;
+
+
+      const dateText =
+  formatDateTime(place);
+
+
+      const categoryText =
+        place.category
+          ? '#' + place.category
+          : '';
+
+
+      let imageHTML = '';
+
+
+      if (currentDetailImages.length > 0) {
+
+        imageHTML = `
+
+          <div class="detail-image-area">
+
+            <img
+              id="detail-image"
+              class="detail-image"
+              src="${escapeHTML(
+                currentDetailImages[0]
+              )}"
+              alt="${escapeHTML(place.name)}"
+            >
+
+            ${
+              currentDetailImages.length > 1
+                ? `
+
+                  <button
+                    id="detail-image-prev"
+                    class="detail-image-arrow detail-image-arrow-left"
+                    type="button"
+                  >
+                    ‹
+                  </button>
+
+                  <button
+                    id="detail-image-next"
+                    class="detail-image-arrow detail-image-arrow-right"
+                    type="button"
+                  >
+                    ›
+                  </button>
+
+                  <div
+                    id="detail-image-dots"
+                    class="detail-image-dots"
+                  >
+
+                    ${currentDetailImages
+                      .map(
+                        (image, index) => `
+
+                          <button
+                            class="detail-image-dot ${
+                              index === 0
+                                ? 'active'
+                                : ''
+                            }"
+                            type="button"
+                            data-index="${index}"
+                            aria-label="画像 ${index + 1}"
+                          ></button>
+
+                        `
+                      )
+                      .join('')}
+
+                  </div>
+
+                `
+                : ''
+            }
+
+          </div>
+
+        `;
+
+      }
+
+      else {
+
+        imageHTML = `
+
+          <div class="detail-image-area">
+
+            <div class="detail-image-empty">
+              NO IMAGE
+            </div>
+
+          </div>
+
+        `;
+
+      }
+
+
+      let bodyHTML = `
+
+        <div class="detail-body">
+
+          ${
+            dateText
+              ? `
+
+                <div class="detail-date">
+                  ${escapeHTML(dateText)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          <div class="detail-name">
+            ${escapeHTML(place.name)}
+          </div>
+
+
+          ${
+            place.city
+              ? `
+
+                <div class="detail-city">
+                  ${escapeHTML(place.city)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          ${
+            categoryText
+              ? `
+
+                <div class="detail-category">
+                  ${escapeHTML(categoryText)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          ${cleanText(place.description)? `
+
+                <section class="detail-section">
+
+                  <div class="detail-section-label">
+                    DESCRIPTION
+                  </div>
+
+                  <div class="detail-text">${escapeHTML(
+                    cleanText(place.description)
+                  )}</div>
+
+                </section>
+
+              `
+              : ''
+          }
+
+
+          ${
+  cleanText(place.impression)
+    ? `
+
+                <section class="detail-section">
+
+                  <div class="detail-section-label">
+                    IMPRESSION
+                  </div>
+
+                  <div class="detail-text">${escapeHTML(cleanText(place.impression))}</div>
+
+                </section>
+
+              `
+              : ''
+          }
+
+
+          ${
+            place.dig_url &&
+            place.dig_url.trim() !== ''
+              ? `
+
+                <a
+                  class="dig-link"
+                  href="${escapeHTML(place.dig_url)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  解説へ →
+                </a>
+
+              `
+              : ''
+          }
+
+        </div>
+
+      `;
+
+
+      content.innerHTML =
+        imageHTML +
+        bodyHTML;
+
+
+      panel.classList.add(
+        'open'
+      );
+
+
+      setupDetailCarousel();
+
+    }
+
+
+    // =========================================
+    // 詳細パネルを閉じる
+    // =========================================
+
+    function closeDetail() {
+
+      const panel =
+        document.getElementById(
+          'detail-panel'
+        );
+
+
+      panel.classList.remove(
+        'open'
+      );
+
+    }
+
+
+    document
+      .getElementById(
+        'detail-close'
+      )
+      .addEventListener(
+        'click',
+        closeDetail
+      );
+
+
+    // =========================================
+    // 詳細パネル画像カルーセル
+    // =========================================
+
+    function setupDetailCarousel() {
+
+      const image =
+        document.getElementById(
+          'detail-image'
+        );
+
+
+      if (!image) {
+
+        return;
+
+      }
+
+
+      const prev =
+        document.getElementById(
+          'detail-image-prev'
+        );
+
+
+      const next =
+        document.getElementById(
+          'detail-image-next'
+        );
+
+
+      const dots =
+        document.querySelectorAll(
+          '.detail-image-dot'
+        );
+
+
+      function update() {
+
+        if (!currentDetailImages.length) {
+
+          return;
+
+        }
+
+
+        image.src =
+          currentDetailImages[
+            currentDetailImageIndex
+          ];
+
+
+        dots.forEach(
+          (dot, index) => {
+
+            dot.classList.toggle(
+              'active',
+              index ===
+                currentDetailImageIndex
+            );
+
+          }
+        );
+
+      }
+
+
+      function goTo(index) {
+
+        const length =
+          currentDetailImages.length;
+
+
+        if (!length) {
+
+          return;
+
+        }
+
+
+        currentDetailImageIndex =
+          (index + length) %
+          length;
+
+
+        update();
+
+      }
+
+
+      if (prev) {
+
+        prev.addEventListener(
+          'click',
+          () => {
+
+            goTo(
+              currentDetailImageIndex - 1
+            );
+
+          }
+        );
+
+      }
+
+
+      if (next) {
+
+        next.addEventListener(
+          'click',
+          () => {
+
+            goTo(
+              currentDetailImageIndex + 1
+            );
+
+          }
+        );
+
+      }
+
+
+      dots.forEach(
+        dot => {
+
+          dot.addEventListener(
+            'click',
+            () => {
+
+              goTo(
+                Number(
+                  dot.dataset.index
+                )
+              );
+
+            }
+          );
+
+        }
+      );
+
+
+      update();
+
+    }
+
+
+    // =========================================
+    // ⑤ Popupを作る
+    // =========================================
+
+    function createPopup(place) {
+
+
+      const dateText =
+  formatDateTime(place);
+
+
+      const categoryText =
+        place.category
+          ? '#' + place.category
+          : '';
+
+
+      const imageUrls =
+        getImageUrls(place);
+
+
+      let imageHTML = '';
+
+
+      if (imageUrls.length > 0) {
+
+        const slides =
+          imageUrls
+
+            .map(
+              (image, index) => `
+
+                <img
+                  class="popup-image-slide"
+                  src="${escapeHTML(image)}"
+                  alt="${escapeHTML(place.name)}"
+                  style="display:${
+                    index === 0
+                      ? 'block'
+                      : 'none'
+                  };"
+                >
+
+              `
+            )
+
+            .join('');
+
+
+        const dots =
+          imageUrls
+
+            .map(
+              (image, index) => `
+
+                <button
+                  class="image-dot ${
+                    index === 0
+                      ? 'active'
+                      : ''
+                  }"
+                  type="button"
+                  aria-label="画像 ${index + 1}"
+                ></button>
+
+              `
+            )
+
+            .join('');
+
+
+        imageHTML = `
+
+          <div class="popup-image-area">
+
+            <div class="popup-image-slider">
+
+              ${slides}
+
+            </div>
+
+
+            ${
+              imageUrls.length > 1
+                ? `
+
+                  <button
+                    class="image-arrow image-arrow-left"
+                    type="button"
+                  >
+                    ‹
+                  </button>
+
+
+                  <button
+                    class="image-arrow image-arrow-right"
+                    type="button"
+                  >
+                    ›
+                  </button>
+
+
+                  <div class="image-dots">
+
+                    ${dots}
+
+                  </div>
+
+                `
+                : ''
+            }
+
+          </div>
+
+        `;
+
+      }
+
+
+      return `
+
+        ${imageHTML}
+
+
+        <div class="popup-place-card">
+
+
+          ${
+            dateText
+              ? `
+
+                <div class="popup-place-date">
+                  ${escapeHTML(dateText)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          <div class="popup-place-name">
+
+            ${escapeHTML(place.name)}
+
+          </div>
+
+
+          ${
+            place.city
+              ? `
+
+                <div class="popup-place-city">
+                  ${escapeHTML(place.city)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          ${
+            categoryText
+              ? `
+
+                <div class="popup-place-category">
+                  ${escapeHTML(categoryText)}
+                </div>
+
+              `
+              : ''
+          }
+
+
+          <button
+            class="detail-button"
+            type="button"
+          >
+            詳しく見る →
+          </button>
+
+
+        </div>
+
+      `;
+
+    }
+
+
+    // =========================================
+    // Popupの「詳しく見る」を設定
+    // =========================================
+
+    function setupPopupDetailButton(
+      popup,
+      place
+    ) {
+
+      const popupElement =
+        popup.getElement();
+
+
+      if (!popupElement) {
+
+        return;
+
+      }
+
+
+      const button =
+        popupElement.querySelector(
+          '.detail-button'
+        );
+
+
+      if (!button) {
+
+        return;
+
+      }
+
+
+      button.addEventListener(
+        'click',
+        event => {
+
+          event.stopPropagation();
+
+          openDetail(place);
+
+        }
+      );
+
+    }
+
+
+    // =========================================
+    // ⑥ スケジュールを作る
+    // =========================================
+
+    function createSchedule() {
+
+      const scheduleContent =
+        document.getElementById(
+          'schedule-content'
+        );
+
+
+      scheduleContent.innerHTML = '';
+
+
+      scheduleItems = [];
+
+
+      // ---------------------------------------
+      // order順
+      // ---------------------------------------
+
+      const sortedPlaces =
+        [...places].sort(
+          (a, b) =>
+            Number(a.order || 999999) -
+            Number(b.order || 999999)
+        );
+
+
+      // ---------------------------------------
+      // 都市ごと
+      // ---------------------------------------
+
+      const cityGroups =
+        new Map();
+
+
+      sortedPlaces.forEach(
+        place => {
+
+          const city =
+            place.city || 'その他';
+
+
+          if (!cityGroups.has(city)) {
+
+            cityGroups.set(
+              city,
+              []
+            );
+
+          }
+
+
+          cityGroups
+            .get(city)
+            .push(place);
+
+        }
+      );
+
+
+      let cityIndex = 0;
+
+
+      cityGroups.forEach(
+        (cityPlaces, city) => {
+
+
+          const section =
+            document.createElement(
+              'section'
+            );
+
+
+          section.className =
+            'city-section';
+
+
+          // 最初の都市だけ開く
+
+          if (cityIndex !== 0) {
+
+            section.classList.add(
+              'collapsed'
+            );
+
+          }
+
+
+          cityIndex++;
+
+
+          // -------------------------------------
+          // 都市ヘッダー
+          // -------------------------------------
+
+          const cityHeader =
+            document.createElement(
+              'button'
+            );
+
+
+          cityHeader.className =
+            'city-header';
+
+            const countryFlag =
+            getCountryFlag(city);
+
+          cityHeader.innerHTML = `
+          <span>
+             ${countryFlag}${escapeHTML(city)}
+             </span>
+             <span class="city-arrow">
+              ▼
+              </span>
+              `;
+
+
+          cityHeader.addEventListener(
+            'click',
+            () => {
+
+              section.classList.toggle(
+                'collapsed'
+              );
+
+            }
+          );
+
+
+          section.appendChild(
+            cityHeader
+          );
+
+
+          // -------------------------------------
+          // 都市内
+          // -------------------------------------
+
+          const cityContainer =
+            document.createElement(
+              'div'
+            );
+
+
+          cityContainer.className =
+            'city-places';
+
+
+          // -------------------------------------
+          // 日付ごと
+          // -------------------------------------
+
+          const dateGroups =
+            new Map();
+
+
+          cityPlaces.forEach(
+            place => {
+
+              const date =
+                place.date || '';
+
+
+              if (!dateGroups.has(date)) {
+
+                dateGroups.set(
+                  date,
+                  []
+                );
+
+              }
+
+
+              dateGroups
+                .get(date)
+                .push(place);
+
+            }
+          );
+
+
+          let dateIndex = 0;
+
+
+          dateGroups.forEach(
+            (datePlaces, date) => {
+
+
+              const dateSection =
+                document.createElement(
+                  'div'
+                );
+
+
+              dateSection.className =
+                'date-section';
+
+
+              // 最初の日付だけ開く
+
+              if (dateIndex !== 0) {
+
+                dateSection.classList.add(
+                  'collapsed'
+                );
+
+              }
+
+
+              dateIndex++;
+
+
+              // ---------------------------------
+              // 日付ヘッダー
+              // ---------------------------------
+
+              const dateHeader =
+                document.createElement(
+                  'button'
+                );
+
+
+              dateHeader.className =
+                'date-header';
+
+
+              dateHeader.innerHTML = `
+
+                <span>
+                  ${escapeHTML(
+                    formatShortDate(date)
+                  )}
+                </span>
+
+                <span class="date-arrow">
+                  ▼
+                </span>
+
+              `;
+
+
+              dateHeader.addEventListener(
+                'click',
+                () => {
+
+                  dateSection.classList.toggle(
+                    'collapsed'
+                  );
+
+                }
+              );
+
+
+              dateSection.appendChild(
+                dateHeader
+              );
+
+
+              // ---------------------------------
+              // 場所一覧
+              // ---------------------------------
+
+              const dateContainer =
+                document.createElement(
+                  'div'
+                );
+
+
+              dateContainer.className =
+                'date-places';
+
+
+              datePlaces.forEach(
+                place => {
+
+
+                  const item =
+                    document.createElement(
+                      'button'
+                    );
+
+
+                  item.className =
+                    'schedule-item';
+
+
+                  item.dataset.category =
+                    place.category || '';
+
+
+                  item.dataset.id =
+                    place.id || '';
+
+
+                  item.innerHTML = `
+
+                    ${
+                      place.time
+                        ? `
+
+                          <div
+                            class="schedule-item-time"
+                          >
+                            ${escapeHTML(
+                              formatTime(
+                                place.time
+                              )
+                            )}
+                          </div>
+
+                        `
+                        : ''
+                    }
+
+
+                    <div
+                      class="schedule-item-name"
+                    >
+                      ${escapeHTML(
+                        place.name
+                      )}
+                    </div>
+
+                  `;
+
+
+                  item.addEventListener(
+                    'click',
+                    () => {
+
+                      focusPlace(place);
+
+                    }
+                  );
+
+
+                  dateContainer.appendChild(
+                    item
+                  );
+
+
+                  scheduleItems.push({
+
+                    element:
+                      item,
+
+                    place:
+                      place,
+
+                    dateSection:
+                      dateSection,
+
+                    citySection:
+                      section
+
+                  });
+
+                }
+              );
+
+
+              dateSection.appendChild(
+                dateContainer
+              );
+
+
+              cityContainer.appendChild(
+                dateSection
+              );
+
+            }
+          );
+
+
+          section.appendChild(
+            cityContainer
+          );
+
+
+          scheduleContent.appendChild(
+            section
+          );
+
+        }
+      );
+
+
+      // 現在のカテゴリーを反映
+
+      applyScheduleFilter();
+
+    }
+
+
+    // =========================================
+    // ⑦ 場所へ移動
+    // =========================================
+
+    function focusPlace(place) {
+
+
+      const lng =
+        Number(place.lng);
+
+
+      const lat =
+        Number(place.lat);
+
+
+      if (
+        Number.isNaN(lng) ||
+        Number.isNaN(lat)
+      ) {
+
+        return;
+
+      }
+
+
+      const markerData =
+        markers.find(
+          marker =>
+            marker.place.id ===
+            place.id
+        );
+
+
+      if (!markerData) {
+
+        return;
+
+      }
+
+
+      // ---------------------------------------
+      // カテゴリーフィルター中の場合
+      // ---------------------------------------
+
+      if (
+        activeCategory !== 'all' &&
+        place.category !== activeCategory
+      ) {
+
+        setCategoryFilter(
+          'all'
+        );
+
+      }
+
+
+      // ---------------------------------------
+      // 詳細パネルを閉じる
+      // ---------------------------------------
+
+      closeDetail();
+
+
+      // ---------------------------------------
+      // ポップアップ
+      // ---------------------------------------
+
+      markerData.marker
+        .getPopup()
+        .addTo(map);
+
+
+      // ---------------------------------------
+      // 地図移動
+      //
+      // 左にスケジュールがあるため
+      // 少し右側に場所を置く
+      // ---------------------------------------
+
+      map.flyTo({
+
+        center: [
+          lng,
+          lat
+        ],
+
+        zoom: 15.5,
+
+        duration: 1500,
+
+        essential: true,
+
+        offset: [
+          120,
+          0
+        ]
+
+      });
+
+    }
+
+
+    // =========================================
+    // ⑧ カテゴリーボタン
+    // =========================================
+
+    function createCategoryButtons() {
+
+
+      const categoryBar =
+        document.getElementById(
+          'category-bar'
+        );
+
+
+      // すでにALL以外を削除
+
+      categoryBar
+        .querySelectorAll(
+          '.category-button:not([data-category="all"])'
+        )
+        .forEach(
+          button =>
+            button.remove()
+        );
+
+
+      const categories =
+        [
+          ...new Set(
+
+            places
+
+              .map(
+                place =>
+                  place.category
+              )
+
+              .filter(
+                category =>
+                  category
+              )
+
+          )
+        ];
+
+
+      categories.forEach(
+        category => {
+
+
+          const button =
+            document.createElement(
+              'button'
+            );
+
+
+          button.className =
+            'category-button';
+
+
+          button.dataset.category =
+            category;
+
+
+          button.textContent =
+            '#' + category;
+
+
+          button.addEventListener(
+            'click',
+            () => {
+
+              setCategoryFilter(
+                category
+              );
+
+            }
+          );
+
+
+          categoryBar.appendChild(
+            button
+          );
+
+        }
+      );
+
+
+      const allButton =
+        categoryBar.querySelector(
+          '[data-category="all"]'
+        );
+
+
+      allButton.addEventListener(
+        'click',
+        () => {
+
+          setCategoryFilter(
+            'all'
+          );
+
+        }
+      );
+
+    }
+
+
+    // =========================================
+    // ⑨ カテゴリーフィルター
+    // =========================================
+
+    function setCategoryFilter(
+      selectedCategory
+    ) {
+
+
+      activeCategory =
+        selectedCategory;
+
+
+      // ---------------------------------------
+      // ボタン
+      // ---------------------------------------
+
+      document
+        .querySelectorAll(
+          '.category-button'
+        )
+        .forEach(
+          button => {
+
+            button.classList.toggle(
+
+              'active',
+
+              button.dataset.category ===
+              selectedCategory
+
+            );
+
+          }
+        );
+
+
+      // ---------------------------------------
+      // ピン
+      // ---------------------------------------
+
+      markers.forEach(
+        markerData => {
+
+
+          const marker =
+            markerData.marker;
+
+
+          const element =
+            marker.getElement();
+
+
+          const category =
+            markerData.place.category;
+
+
+          const visible =
+            selectedCategory === 'all' ||
+            category === selectedCategory;
+
+
+          if (visible) {
+
+            element.style.display =
+              '';
+
+          }
+
+          else {
+
+            element.style.display =
+              'none';
+
+          }
+
+        }
+      );
+
+
+      // ---------------------------------------
+      // スケジュール
+      // ---------------------------------------
+
+      applyScheduleFilter();
+
+
+      // ---------------------------------------
+      // 選択中のPopup
+      // ---------------------------------------
+
+      if (
+        selectedCategory !== 'all'
+      ) {
+
+        markers.forEach(
+          markerData => {
+
+            if (
+              markerData.place.category !==
+              selectedCategory
+            ) {
+
+              markerData.marker
+                .getPopup()
+                .remove();
+
+            }
+
+          }
+        );
+
+      }
+
+    }
+
+
+    // =========================================
+    // スケジュールフィルター
+    // =========================================
+
+    function applyScheduleFilter() {
+
+
+      scheduleItems.forEach(
+        itemData => {
+
+
+          const category =
+            itemData.place.category;
+
+
+          const visible =
+            activeCategory === 'all' ||
+            category === activeCategory;
+
+
+          itemData.element.classList.toggle(
+            'hidden',
+            !visible
+          );
+
+        }
+      );
+
+
+      // ---------------------------------------
+      // 日付を表示するか
+      // ---------------------------------------
+
+      document
+        .querySelectorAll(
+          '.date-section'
+        )
+        .forEach(
+          dateSection => {
+
+
+            const visibleItems =
+              dateSection.querySelectorAll(
+                '.schedule-item:not(.hidden)'
+              );
+
+
+            dateSection.style.display =
+              visibleItems.length > 0
+                ? ''
+                : 'none';
+
+          }
+        );
+
+
+      // ---------------------------------------
+      // 都市を表示するか
+      // ---------------------------------------
+
+      document
+        .querySelectorAll(
+          '.city-section'
+        )
+        .forEach(
+          citySection => {
+
+
+            const visibleItems =
+              citySection.querySelectorAll(
+                '.schedule-item:not(.hidden)'
+              );
+
+
+            citySection.classList.toggle(
+
+              'hidden',
+
+              visibleItems.length === 0
+
+            );
+
+          }
+        );
+
+    }
+
+
+    // =========================================
+    // ⑩ Google Sheetsから読み込む
+    // =========================================
+
+    const cacheBuster =
+      '&_=' + Date.now();
+
+
+    fetch(
+      sheetUrl +
+      cacheBuster
+    )
+
+
+      .then(
+        response => {
+
+
+          console.log(
+            'CSV取得ステータス:',
+            response.status
+          );
+
+
+          console.log(
+            'CSV取得OK:',
+            response.ok
+          );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              'Google SheetsのCSVを取得できませんでした。'
+            );
+
+          }
+
+
+          return response.text();
+
+        }
+      )
+
+
+      .then(
+        csv => {
+
+
+          console.log(
+            'Google Sheets CSV取得成功'
+          );
+
+
+          // -----------------------------------
+          // CSV解析
+          // -----------------------------------
+
+          const rows =
+            parseCSV(csv);
+
+
+          console.log(
+            '読み込んだ行数:',
+            rows.length
+          );
+
+
+          if (
+            rows.length === 0
+          ) {
+
+            throw new Error(
+              'CSVにデータがありません。'
+            );
+
+          }
+
+
+          // -----------------------------------
+          // 見出し
+          // -----------------------------------
+
+          const headers =
+            rows[0].map(
+              header =>
+                header
+                  .replace(
+                    /^\uFEFF/,
+                    ''
+                  )
+                  .trim()
+            );
+
+
+          console.log(
+            '見出し:',
+            headers
+          );
+
+
+          // -----------------------------------
+          // PLACEデータ
+          // -----------------------------------
+
+          rows
+            .slice(1)
+            .forEach(
+              values => {
+
+
+                const place = {};
+
+
+                headers.forEach(
+  (header, i) => {
+
+    place[header] =
+      values[i]
+        ? cleanText(values[i])
+        : '';
+
+  }
+);
+
+
+                // ---------------------------------
+                // 緯度経度
+                // ---------------------------------
+
+                if (
+                  !place.lat ||
+                  !place.lng
+                ) {
+
+                  console.log(
+                    '緯度・経度がないためスキップ:',
+                    place.name
+                  );
+
+                  return;
+
+                }
+
+
+                const lat =
+                  Number(place.lat);
+
+
+                const lng =
+                  Number(place.lng);
+
+
+                if (
+                  Number.isNaN(lat) ||
+                  Number.isNaN(lng)
+                ) {
+
+                  console.log(
+                    '緯度・経度が不正:',
+                    place.name
+                  );
+
+                  return;
+
+                }
+
+
+                // ---------------------------------
+                // データ保存
+                // ---------------------------------
+
+                places.push(
+                  place
+                );
+
+
+                // ---------------------------------
+                // Popup
+                // ---------------------------------
+
+                const popup =
+                  new mapboxgl.Popup({
+
+                    offset: 15,
+
+                    closeButton: true,
+
+                    closeOnClick: true
+
+                  });
+
+
+                popup.setHTML(
+                  createPopup(place)
+                );
+
+
+                // ---------------------------------
+                // Popupが開いたとき
+                // ---------------------------------
+
+                popup.on(
+                  'open',
+                  () => {
+
+                    setupImageCarousel(
+                      popup
+                    );
+
+                    setupPopupDetailButton(
+                      popup,
+                      place
+                    );
+
+                  }
+                );
+
+
+                // ---------------------------------
+                // カスタムピン
+                // ---------------------------------
+
+                const markerElement =
+                  document.createElement(
+                    'div'
+                  );
+
+
+                markerElement.className =
+                  'place-marker';
+
+
+                // ---------------------------------
+                // Marker
+                // ---------------------------------
+
+                const marker =
+                  new mapboxgl.Marker({
+
+                    element:
+                      markerElement
+
+                  })
+
+                    .setLngLat([
+
+                      lng,
+
+                      lat
+
+                    ])
+
+                    .setPopup(
+                      popup
+                    )
+
+                    .addTo(map);
+
+
+                // ---------------------------------
+                // Marker保存
+                // ---------------------------------
+
+                markers.push({
+
+                  marker:
+                    marker,
+
+                  place:
+                    place
+
+                });
+
+
+                console.log(
+                  '★ ピン追加:',
+                  place.name
+                );
+
+              }
+            );
+
+
+          // =====================================
+          // データ読み込み完了
+          // =====================================
+
+          console.log(
+            '========== PLACES読み込み完了 =========='
+          );
+
+
+          // =====================================
+          // スケジュール
+          // =====================================
+
+          createSchedule();
+
+
+          // =====================================
+          // カテゴリーボタン
+          // =====================================
+
+          createCategoryButtons();
+
+
+        }
+      )
+
+
+      .catch(
+        error => {
+
+          console.error(
+
+            '★ Google Sheetsの読み込みに失敗しました。',
+
+            error
+
+          );
+
+        }
+      );
+
+
+  </script>
+
+
+</body>
+
+</html>
