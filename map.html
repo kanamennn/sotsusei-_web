@@ -491,23 +491,26 @@
 }
 
 
+/* マウスを乗せたとき */
 .place-marker:hover {
+
   width: 20px;
   height: 20px;
 
-  background: var(--pin-color);
+  background: #222222;
+
 }
 
 
-    .place-marker:hover {
+/* クリックして選択中 */
+.place-marker.selected {
 
-      width: 20px;
+  width: 20px;
+  height: 20px;
 
-      height: 20px;
+  background: #222222;
 
-      background: #222222;
-
-    }
+}
 
 
     .place-marker.filtered-out {
@@ -2205,6 +2208,27 @@ function getCountryFlag(city) {
 
     function openDetail(place) {
 
+      const markerData =
+  markers.find(
+    marker =>
+      marker.place.id ===
+      place.id
+  );
+
+if (markerData) {
+
+  markerData.marker
+    .getPopup()
+    .remove();
+
+  markerData.marker
+    .getElement()
+    .classList.add(
+      'selected'
+    );
+
+}
+
       const panel =
         document.getElementById(
           'detail-panel'
@@ -2455,17 +2479,29 @@ function getCountryFlag(city) {
 
     function closeDetail() {
 
-      const panel =
-        document.getElementById(
-          'detail-panel'
+  const panel =
+    document.getElementById(
+      'detail-panel'
+    );
+
+  panel.classList.remove(
+    'open'
+  );
+
+
+  markers.forEach(
+    markerData => {
+
+      markerData.marker
+        .getElement()
+        .classList.remove(
+          'selected'
         );
 
-
-      panel.classList.remove(
-        'open'
-      );
-
     }
+  );
+
+}
 
 
     document
@@ -3929,6 +3965,28 @@ function getCountryFlag(city) {
                     )
 
                     .addTo(map);
+                    popup.on(
+  'open',
+  () => {
+
+    markerElement.classList.add(
+      'selected'
+    );
+
+  }
+);
+
+
+popup.on(
+  'close',
+  () => {
+
+    markerElement.classList.remove(
+      'selected'
+    );
+
+  }
+);
 
 
                 // ---------------------------------
